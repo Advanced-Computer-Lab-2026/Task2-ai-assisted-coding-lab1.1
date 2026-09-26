@@ -1,4 +1,5 @@
 import { Feedback } from '../models/Feedback.js';
+import mongoose from 'mongoose';
 
 // GET /api/feedback
 // TODO: implement per README.md section 2.
