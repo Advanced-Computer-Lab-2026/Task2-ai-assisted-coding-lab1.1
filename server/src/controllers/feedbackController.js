@@ -5,6 +5,8 @@ import { Feedback } from '../models/Feedback.js';
 export async function getAllFeedbacks(req, res, next) {
   try {
     // TODO
+    const feedbacks = await Feedback.find();
+    res.status(200).json({ feedbacks });
   } catch (err) { next(err); }
 }
 
@@ -13,6 +15,11 @@ export async function getAllFeedbacks(req, res, next) {
 export async function getFeedback(req, res, next) {
   try {
     // TODO
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ message: 'Feedback not found' });
+    }
+    res.status(200).json({ feedback });
   } catch (err) { next(err); }
 }
 
@@ -21,6 +28,8 @@ export async function getFeedback(req, res, next) {
 export async function createFeedback(req, res, next) {
   try {
     // TODO
+    const feedback = await Feedback.create(req.body);
+    res.status(201).json({ feedback });
   } catch (err) { next(err); }
 }
 
@@ -29,5 +38,35 @@ export async function createFeedback(req, res, next) {
 export async function getFeedbackSummary(req, res, next) {
   try {
     // TODO
+    const { workshopCode } = req.query;
+
+    if (!workshopCode) {
+      return res.status(400).json({ message: 'workshopCode is required' });
+    }
+
+    const results = await Feedback.aggregate([
+      { $match: { workshopCode } },
+      {
+        $group: {
+          _id: '$workshopCode',
+          averageScore: { $avg: '$score' },
+          feedbackCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    if (results.length === 0) {
+      return res.status(200).json({
+        workshopCode,
+        averageScore: 0,
+        feedbackCount: 0,
+      });
+    }
+
+    res.status(200).json({
+      workshopCode: results[0]._id,
+      averageScore: results[0].averageScore,
+      feedbackCount: results[0].feedbackCount,
+    });
   } catch (err) { next(err); }
 }
