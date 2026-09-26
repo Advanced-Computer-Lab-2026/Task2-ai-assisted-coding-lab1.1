@@ -1,13 +1,15 @@
-import { Router } from 'express';
+import express from 'express';
 import {
-  getAllFeedbacks,
-  getFeedback,
   createFeedback,
+  getFeedbacks,
+  getFeedbackById,
   getFeedbackSummary
 } from '../controllers/feedbackController.js';
 
-const router = Router();
+const router = express.Router();
 
-// TODO: wire up the three routes in README.md section 2 and the summary route in section 3.
+router.get('/summary', getFeedbackSummary);
+router.route('/').get(getFeedbacks).post(createFeedback);
+router.route('/:id').get(getFeedbackById);
 
 export default router;

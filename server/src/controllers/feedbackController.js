@@ -1,33 +1,75 @@
 import { Feedback } from '../models/Feedback.js';
 
-// GET /api/feedback
-// TODO: implement per README.md section 2.
-export async function getAllFeedbacks(req, res, next) {
+// @desc    Create new feedback
+// @route   POST /api/feedback
+export const createFeedback = async (req, res) => {
   try {
-    // TODO
-  } catch (err) { next(err); }
-}
+    const feedback = await Feedback.create(req.body);
+    res.status(201).json({ feedback });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
-// GET /api/feedback/:id
-// TODO: implement per README.md section 2.
-export async function getFeedback(req, res, next) {
+// @desc    Get all feedback entries
+// @route   GET /api/feedback
+export const getFeedbacks = async (req, res) => {
   try {
-    // TODO
-  } catch (err) { next(err); }
-}
+    const feedbacks = await Feedback.find({});
+    res.status(200).json({ feedbacks });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-// POST /api/feedback
-// TODO: implement per README.md section 2.
-export async function createFeedback(req, res, next) {
+// @desc    Get single feedback by ID
+// @route   GET /api/feedback/:id
+export const getFeedbackById = async (req, res) => {
   try {
-    // TODO
-  } catch (err) { next(err); }
-}
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ message: 'Feedback not found' });
+    }
+    res.status(200).json({ feedback });
+  } catch (error) {
+    res.status(404).json({ message: 'Feedback not found' });
+  }
+};
 
-// GET /api/feedback/summary?workshopCode=WS101
-// TODO: implement per README.md section 3.
-export async function getFeedbackSummary(req, res, next) {
+// @desc    Get feedback summary aggregation
+// @route   GET /api/feedback/summary
+export const getFeedbackSummary = async (req, res) => {
   try {
-    // TODO
-  } catch (err) { next(err); }
-}
+    const { workshopCode } = req.query;
+    if (!workshopCode) {
+      return res.status(400).json({ message: 'workshopCode is required' });
+    }
+
+    const stats = await Feedback.aggregate([
+      { $match: { workshopCode } },
+      {
+        $group: {
+          _id: '$workshopCode',
+          averageScore: { $avg: '$score' },
+          feedbackCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    if (stats.length === 0) {
+      return res.status(200).json({
+        workshopCode,
+        averageScore: 0,
+        feedbackCount: 0
+      });
+    }
+
+    res.status(200).json({
+      workshopCode,
+      averageScore: stats[0].averageScore,
+      feedbackCount: stats[0].feedbackCount
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

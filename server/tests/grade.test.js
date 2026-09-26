@@ -10,12 +10,6 @@ import { graded, printReport } from './rubric.js';
 const BASE = '/api/feedback';
 const REQUEST_TIMEOUT_MS = 5000;
 
-// Each run uses its own throwaway database on the MONGO_URI cluster, so parallel
-// runs never touch each other's data. The shared account is not allowed to drop
-// a database, so cleanup drops the run's collections instead: a MongoDB
-// database with no collections no longer exists. A run that dies before its
-// cleanup leaves its database behind, so every run first sweeps grade_
-// databases older than STALE_AFTER_MS, dated by the timestamp in their name.
 const RUN_DB = `grade_${process.env.GITHUB_RUN_ID || 'local'}_${Date.now()}_${randomBytes(3).toString('hex')}`;
 const GRADE_DB = /^grade_[^_]+_(\d{13})_[0-9a-f]{6}$/;
 const STALE_AFTER_MS = 60 * 60 * 1000;
@@ -59,8 +53,6 @@ afterAll(async () => {
   await mongoose.disconnect();
 });
 
-// ---------- helpers ----------
-
 const api = {
   get: (path) => request(app).get(path).timeout(REQUEST_TIMEOUT_MS),
   post: (path, body) => request(app).post(path).send(body).timeout(REQUEST_TIMEOUT_MS)
@@ -83,8 +75,6 @@ function numericOption(path, key) {
   const value = path?.options?.[key];
   return Array.isArray(value) ? value[0] : value;
 }
-
-// ---------- graded checks ----------
 
 graded('model_fields', async () => {
   const schema = Feedback.schema;
@@ -194,7 +184,6 @@ graded('summary', async () => {
 graded('summary_query', async () => {
   await seed();
 
-  // /summary must be its own route, not swallowed by /:id.
   const summary = await api.get(`${BASE}/summary?workshopCode=WS101`);
   expect(summary.status).toBe(200);
   expect(summary.body.workshopCode).toBe('WS101');

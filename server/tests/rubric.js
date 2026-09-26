@@ -1,8 +1,3 @@
-// Functional grading rubric: each check is reported on its own, so a grade is a
-// breakdown rather than a single number. Every graded test in grade.test.js is
-// registered through graded(), which records PASS/FAIL for the final report.
-// The GRADE_BREAKDOWN line is read by the grading workflow; keep its format.
-
 export const RUBRIC = [
   ['model_fields', 'Model fields'],
   ['model_rules', 'Model rules'],
