@@ -58,6 +58,36 @@ export async function createFeedback(req, res, next) {
 // TODO: implement per README.md section 3.
 export async function getFeedbackSummary(req, res, next) {
   try {
-    // TODO
+    // TOD
+    const { workshopCode } = req.query;
+
+    if (!workshopCode || !workshopCode.trim()) {
+      return res.status(400).json({ message: 'workshopCode is required' });
+    }
+
+    const [result] = await Feedback.aggregate([
+      { $match: { workshopCode } },
+      {
+        $group: {
+          _id: '$workshopCode',
+          averageScore: { $avg: '$score' },
+          feedbackCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    if (!result) {
+      return res.status(200).json({
+        workshopCode,
+        averageScore: 0,
+        feedbackCount: 0,
+      });
+    }
+
+    res.status(200).json({
+      workshopCode,
+      averageScore: result.averageScore,
+      feedbackCount: result.feedbackCount,
+    });
   } catch (err) { next(err); }
 }
